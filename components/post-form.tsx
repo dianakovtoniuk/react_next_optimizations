@@ -3,9 +3,14 @@
 import { useFormState } from 'react-dom';
 
 import FormSubmit from '@/components/form-submit';
+import type { FormState } from '@/actions/posts';
 
-export default function PostForm({ action }) {
-  const [state, formAction] = useFormState(action, {});
+interface PostFormProps {
+  action: (prevState: FormState, formData: FormData) => Promise<FormState>;
+}
+
+export default function PostForm({ action }: PostFormProps) {
+  const [state, formAction] = useFormState(action, {} as FormState);
 
   return (
     <>
@@ -26,7 +31,7 @@ export default function PostForm({ action }) {
         </p>
         <p className="form-control">
           <label htmlFor="content">Content</label>
-          <textarea id="content" name="content" rows="5" />
+          <textarea id="content" name="content" rows={5} />
         </p>
         <p className="form-actions">
           <FormSubmit />

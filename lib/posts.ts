@@ -2,7 +2,26 @@ import sql from 'better-sqlite3';
 
 const db = new sql('posts.db');
 
-function initDb() {
+export interface Post {
+  id: number;
+  image: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  userFirstName: string;
+  userLastName: string;
+  likes: number;
+  isLiked: number;
+}
+
+export interface NewPost {
+  imageUrl: string;
+  title: string;
+  content: string;
+  userId: number;
+}
+
+function initDb(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY, 
@@ -32,7 +51,7 @@ function initDb() {
   // Creating two dummy users if they don't exist already
   const stmt = db.prepare('SELECT COUNT(*) AS count FROM users');
 
-  if (stmt.get().count === 0) {
+  if ((stmt.get() as { count: number }).count === 0) {
     db.exec(`
     INSERT INTO users (first_name, last_name, email)
     VALUES ('John', 'Doe', 'john@example.com')
@@ -47,7 +66,7 @@ function initDb() {
 
 initDb();
 
-export async function getPosts(maxNumber) {
+export async function getPosts(maxNumber?: number): Promise<Post[]> {
   let limitClause = '';
 
   if (maxNumber) {
@@ -64,10 +83,10 @@ export async function getPosts(maxNumber) {
     ${limitClause}`);
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  return maxNumber ? stmt.all(maxNumber) : stmt.all();
+  return (maxNumber ? stmt.all(maxNumber) : stmt.all()) as Post[];
 }
 
-export async function storePost(post) {
+export async function storePost(post: NewPost) {
   const stmt = db.prepare(`
     INSERT INTO posts (image_url, title, content, user_id)
     VALUES (?, ?, ?, ?)`);
@@ -75,13 +94,13 @@ export async function storePost(post) {
   return stmt.run(post.imageUrl, post.title, post.content, post.userId);
 }
 
-export async function updatePostLikeStatus(postId, userId) {
+export async function updatePostLikeStatus(postId: number, userId: number) {
   const stmt = db.prepare(`
     SELECT COUNT(*) AS count
     FROM likes
     WHERE user_id = ? AND post_id = ?`);
 
-  const isLiked = stmt.get(userId, postId).count === 0;
+  const isLiked = (stmt.get(userId, postId) as { count: number }).count === 0;
 
   if (isLiked) {
     const stmt = db.prepare(`

@@ -6,12 +6,19 @@ import { redirect } from 'next/navigation';
 import { storePost, updatePostLikeStatus } from '@/lib/posts';
 import { uploadImage } from '@/lib/cloudinary';
 
-export async function createPost(prevState, formData) {
-  const title = formData.get('title');
-  const image = formData.get('image');
-  const content = formData.get('content');
+export interface FormState {
+  errors?: string[];
+}
 
-  let errors = [];
+export async function createPost(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const title = formData.get('title') as string | null;
+  const image = formData.get('image') as File | null;
+  const content = formData.get('content') as string | null;
+
+  const errors: string[] = [];
 
   if (!title || title.trim().length === 0) {
     errors.push('Title is required.');
@@ -29,10 +36,10 @@ export async function createPost(prevState, formData) {
     return { errors };
   }
 
-  let imageUrl;
+  let imageUrl: string;
 
   try {
-    imageUrl = await uploadImage(image);
+    imageUrl = await uploadImage(image!);
   } catch (error) {
     throw new Error(
       'Image upload failed, post was not created. Please try again later.'
@@ -40,9 +47,9 @@ export async function createPost(prevState, formData) {
   }
 
   await storePost({
-    imageUrl: imageUrl,
-    title,
-    content,
+    imageUrl,
+    title: title!,
+    content: content!,
     userId: 1,
   });
 
@@ -50,7 +57,7 @@ export async function createPost(prevState, formData) {
   redirect('/feed');
 }
 
-export async function togglePostLikeStatus(postId) {
+export async function togglePostLikeStatus(postId: number): Promise<void> {
   await updatePostLikeStatus(postId, 2);
   revalidatePath('/', 'layout');
 }

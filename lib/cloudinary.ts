@@ -18,7 +18,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function uploadImage(image) {
+export async function uploadImage(image: File): Promise<string> {
   const imageData = await image.arrayBuffer();
   const mime = image.type;
   const encoding = 'base64';

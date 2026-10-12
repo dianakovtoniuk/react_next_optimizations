@@ -5,8 +5,14 @@ import { useOptimistic } from 'react';
 import { formatDate } from '@/lib/format';
 import LikeButton from './like-icon';
 import { togglePostLikeStatus } from '@/actions/posts';
+import type { Post as PostType } from '@/lib/posts';
 
-function Post({ post, action }) {
+interface PostProps {
+  post: PostType;
+  action: (postId: number) => Promise<void>;
+}
+
+function Post({ post, action }: PostProps) {
   return (
     <article className="post">
       <div className="post-image">
@@ -38,8 +44,12 @@ function Post({ post, action }) {
   );
 }
 
-export default function Posts({ posts }) {
-  const [optimisticPosts, updateOptimisticPosts] = useOptimistic(posts, (prevPosts, updatedPostId) => {
+interface PostsProps {
+  posts: PostType[];
+}
+
+export default function Posts({ posts }: PostsProps) {
+  const [optimisticPosts, updateOptimisticPosts] = useOptimistic(posts, (prevPosts: PostType[], updatedPostId: number) => {
     const updatedPostIndex = prevPosts.findIndex(post => post.id === updatedPostId);
 
     if (updatedPostIndex === -1) {
@@ -48,7 +58,7 @@ export default function Posts({ posts }) {
 
     const updatedPost = { ...prevPosts[updatedPostIndex] };
     updatedPost.likes = updatedPost.likes + (updatedPost.isLiked ? -1 : 1);
-    updatedPost.isLiked = !updatedPost.isLiked;
+    updatedPost.isLiked = updatedPost.isLiked ? 0 : 1;
     const newPosts = [...prevPosts];
     newPosts[updatedPostIndex] = updatedPost;
     return newPosts;
@@ -58,7 +68,7 @@ export default function Posts({ posts }) {
     return <p>There are no posts yet. Maybe start sharing some?</p>;
   }
 
-  async function updatePost(postId) {
+  async function updatePost(postId: number) {
     updateOptimisticPosts(postId);
     await togglePostLikeStatus(postId);
   }
